@@ -27,12 +27,12 @@ The data set is used for weather monitoring and forecasting purposes. It contain
 
 ## Work Packages
 
-- #1
-- #2
-- #3
-- #5
-- #6
-- #4
+1. [Automated data pipeline](https://github.com/quicktus/2023-amse/issues/1)
+2. [Automated tests](https://github.com/quicktus/2023-amse/issues/2)
+3. [Continuous Integration](https://github.com/quicktus/2023-amse/issues/3)
+4. [Data visualization](https://github.com/quicktus/2023-amse/issues/5)
+5. [Implement song recommendation](https://github.com/quicktus/2023-amse/issues/6)
+6. [Deployment](https://github.com/quicktus/2023-amse/issues/4)
 
 ___
 
