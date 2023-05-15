@@ -1,0 +1,3 @@
+pandas==2.0.1
+rich==13.3.5
+pyftplib==1.5.6
