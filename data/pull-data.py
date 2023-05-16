@@ -1,4 +1,4 @@
-# Required Data:
+# built using python v3.11.3
 
 # * Datasource1: Spotify daily charts per country (kaggle)
 #    -> https://www.kaggle.com/datasets/pepepython/spotify-huge-database-daily-charts-over-3-years
@@ -25,135 +25,116 @@ from kaggle.api.kaggle_api_extended import KaggleApi
 from rich import print
 from rich.progress import track
 
+from dwd_config import data_sources
 from logger import log
 
 
 # globals
-raw_dir: str = "raw"
-db_connection_uri = "sqlite:///../data.sqlite"
-engine = sa.create_engine(db_connection_uri)
+RAW_DIR: str = "raw"
+DB_CONNECTION_URI = "sqlite:///../data.sqlite"
+FTP_URI: str = "opendata.dwd.de"
+engine = sa.create_engine(DB_CONNECTION_URI)
 
 def main():
-
-    spotify: str = "spotify_data"
-    spotify_uri: str = "pepepython/spotify-huge-database-daily-charts-over-3-years"
-    spotify_path: str = os.path.join(raw_dir, spotify)
-    spotify_zip_name: str = "spotify-huge-database-daily-charts-over-3-years.zip"
-    spotify_member_name: str = "Database to calculate popularity.csv"
-
-    ftp_uri: str = "opendata.dwd.de"
-    data_sources = [
-        {
-            "name": "rain_data",
-            "path": "climate_environment/CDC/observations_germany/climate/daily/more_precip/historical/",
-            "columns": ["STATIONS_ID", "MESS_DATUM", "  RS", " RSF"],
-        },
-        {
-            "name": "cloud_data",
-            "path": "climate_environment/CDC/observations_germany/climate/subdaily/cloudiness/historical/",
-            "columns": ["STATIONS_ID", "MESS_DATUM", "N_TER", "CD_TER"],
-        },
-        {
-            "name": "temperature_data",
-            "path": "climate_environment/CDC/observations_germany/climate/subdaily/air_temperature/historical/",
-            "columns": ["STATIONS_ID", "MESS_DATUM", "TT_TER", "RF_TER"],
-        },
-        {
-            "name": "wind_data",
-            "path": "climate_environment/CDC/observations_germany/climate/subdaily/wind/historical/",
-            "columns": ["STATIONS_ID", "MESS_DATUM", "DK_TER", "FK_TER"],
-        }
-    ]
-    # list of weather acronyms:
-    # https://www.noaa.gov/jetstream/appendix/weather-acronyms
-
     if "--clean" in sys.argv:
         clean_data()
         log("Cleaned raw data directory and SQLite database", "success")
 
-    log(f"Pipeline started", timestamp=True)
+    log("Pipeline started", timestamp=True)
 
-    # Working with the kaggle API requires an API Token, see:
-    # https://www.kaggle.com/docs/api
-    # https://github.com/Kaggle/kaggle-api
-
-    api = KaggleApi()
-    api.authenticate()
-
-    if(os.path.exists(spotify_path)):
-            log(f"Found {spotify} files", "success")
+    spotify: str = "spotify_data"
+    if(os.path.exists(os.path.join(RAW_DIR, spotify))):
+        log(f"Found {spotify} files", "success")
     else:
-        # Download all files of the kaggle spotify dataset
-        print(log(f"Downloading {spotify} from server", "status", ret_str=True), end= "\r")
-        api.dataset_download_files(spotify_uri, path=spotify_path)
+        download_spotify_data(spotify)
         log(f"Downloaded {spotify}" + " "*42, "success")
 
     if sa.inspect(engine).has_table(spotify):
             log(f"Found {spotify} table", "success")
     else:
         print(log(f"Extracting {spotify} into database", "status", ret_str=True), end= "\r")
-        kaggle_extract_to_db(spotify, spotify_zip_name, spotify_member_name)
+        extract_spotify_data_to_db(spotify)
         log((f"Extracted {spotify}" + " "*15), "success")
 
     for data_src in data_sources:
-        if(os.path.exists(os.path.join(raw_dir, data_src['name']))):
+        if(os.path.exists(os.path.join(RAW_DIR, data_src['name']))):
             log(f"Found {data_src['name']} files", "success")
         else:
-            dwd_download(ftp_uri, data_src['name'], data_src['path'])
+            download_weather_data(data_src['name'], data_src['path'])
             log(f"Downloaded {data_src['name']}", "success")
 
         if sa.inspect(engine).has_table(data_src["name"]):
             log(f"Found {data_src['name']} table", "success")
         else:
-            dwd_extract_to_db(data_src['name'], data_src['columns'])
+            extract_weather_data_to_db(data_src['name'], data_src['columns'])
             log(f"Extracted {data_src['name']}", "success")
 
-    log(f"Pipeline completed", timestamp=True)
+    log("Pipeline completed", timestamp=True)
 
 
-def dwd_download(ftp_uri: str, data_src_name: str, path: str):
+def clean_data():
+    """Cleans the raw data directory and SQLite database."""
+
+    # Remove all subdirectories in the raw data directory
+    desc = log("Removing raw data files ", "status", ret_str=True)
+    progress_dirs = track(os.listdir(RAW_DIR), description=desc, transient=True)
+    for sub_dir in progress_dirs:
+        sub_dir_path = os.path.join(RAW_DIR, sub_dir)
+        shutil.rmtree(sub_dir_path)
+
+    # Delete all tables in the SQLite db
+    with engine.begin() as connection:
+        tables = connection.execute(sa.text("SELECT name FROM sqlite_master WHERE type='table';")).fetchall()
+        desc = log("Dropping all tables in db ", "status", ret_str=True)
+        progress_tables = track(tables, description=desc, transient=True)
+        for table in progress_tables:
+            connection.execute(sa.text(f"DROP TABLE {table[0]}"))
+
+
+def download_weather_data(data_src_name: str, path: str):
+    """Downloads DWD (German Weather Service) data from the FTP server."""
+
     # Connect to FTP server and navigate to the target directory
-    ftp = FTP(ftp_uri)
-    ftp.login()
-    directory_path, file_name = os.path.split(path)
-    ftp.cwd(directory_path)
+    with FTP(FTP_URI) as ftp:
+        ftp.login()
+        directory_path, file_name = os.path.split(path)
+        ftp.cwd(directory_path)
 
-    # Get a list of all files
-    files: list[str] = None
-    if file_name is None or file_name == "":
-        files = ftp.nlst()
-    else:
-        files = [file_name]
+        # Get a list of all files
+        files: list[str] = None
+        if file_name is None or file_name == "":
+            files = ftp.nlst()
+        else:
+            files = [file_name]
 
-    # Filter for right timeframe (2017-2020)
-    filtered_files: list[str] = []
-    for file in files:
-        match = re.search(r"(\d{8})_(\d{8})", file)
-        if match:
-            start_date, end_date = match.group(1), match.group(2)
-            if start_date <= "20170125" and end_date >= "20201130":
-                filtered_files.append(file)
+        # Filter for right timeframe (2017-2020)
+        filtered_files: list[str] = []
+        for file in files:
+            match = re.search(r"(\d{8})_(\d{8})", file)
+            if match:
+                start_date, end_date = match.group(1), match.group(2)
+                if start_date <= "20170125" and end_date >= "20201130":
+                    filtered_files.append(file)
 
-    # Create target directory
-    raw_data_directory: str = os.path.join(raw_dir, data_src_name)
-    os.makedirs(raw_data_directory, exist_ok=True)
+        # Create target directory
+        raw_data_directory: str = os.path.join(RAW_DIR, data_src_name)
+        os.makedirs(raw_data_directory, exist_ok=True)
 
-    # Download each file
-    desc = log(f"Downloading {data_src_name} from server ", "status", ret_str=True)
-    progress = track(filtered_files, description=desc, transient=True)
-    for file in progress:
-        local_filename: str = os.path.join(raw_data_directory, file)
-        with open(local_filename, "wb") as f:
-            def callback(chunk):
-                f.write(chunk)
-            ftp.retrbinary("RETR " + file, callback)
-
-    # Close FTP connection
-    ftp.quit()
+        # Download each file
+        desc = log(f"Downloading {data_src_name} from server ", "status", ret_str=True)
+        progress = track(filtered_files, description=desc, transient=True)
+        for file in progress:
+            local_filename: str = os.path.join(raw_data_directory, file)
+            with open(local_filename, "wb") as f:
+                def callback(chunk):
+                    f.write(chunk)
+                ftp.retrbinary("RETR " + file, callback)
 
 
-def dwd_extract_to_db(data_src_name: str, filter_items: str):
-    directory: str = os.path.join(raw_dir, data_src_name)
+def extract_weather_data_to_db(data_src_name: str, filter_items: str):
+    """Extracts DWD (German Weather Service) data to the database."""
+
+    directory: str = os.path.join(RAW_DIR, data_src_name)
     # Get a list of all zip files in the directory
     zip_files = [file for file in os.listdir(directory) if file.endswith(".zip")]
     # Iterate over the zips with a progress bar
@@ -173,32 +154,36 @@ def dwd_extract_to_db(data_src_name: str, filter_items: str):
                     df.to_sql(data_src_name, engine, if_exists="append", index=False)
 
 
-def kaggle_extract_to_db(data_src_name: str, zip_name: str, member_file_name: str):
-    data_src_path: str = os.path.join(raw_dir, data_src_name, zip_name)
+def download_spotify_data(spotify: str):
+    """Downloads Spotify data from Kaggle."""
+
+    # Working with the kaggle API requires an API Token, see:
+    # https://www.kaggle.com/docs/api
+    # https://github.com/Kaggle/kaggle-api
+
+    spotify_uri: str = "pepepython/spotify-huge-database-daily-charts-over-3-years"
+
+    api = KaggleApi()
+    api.authenticate()
+
+    print(log(f"Downloading {spotify} from server", "status", ret_str=True), end= "\r")
+    api.dataset_download_files(spotify_uri, path=os.path.join(RAW_DIR, spotify))
+
+
+def extract_spotify_data_to_db(spotify: str):
+    """Extracts Spotify data from the downloaded ZIP file and stores it in the database."""
+
+    ZIP_NAME: str = "spotify-huge-database-daily-charts-over-3-years.zip"
+    MEMBER_NAME: str = "Database to calculate popularity.csv"
+
+    data_src_path: str = os.path.join(RAW_DIR, spotify, ZIP_NAME)
     with zipfile.ZipFile(data_src_path, "r") as zip_ref:
-        with zip_ref.open(name=member_file_name, mode="r") as tmpfile:
+        with zip_ref.open(name=MEMBER_NAME, mode="r") as tmpfile:
             df = pd.read_csv(tmpfile)
             # Filter to only include rows where country is Germany
             df = df[df['country'] == 'Germany']
             # Store the data into the SQLiteDB
-            df.to_sql(data_src_name, engine, if_exists="replace", index=False)
-
-
-def clean_data():
-    # Remove all subdirectories in the raw data directory
-    desc = log("Removing raw data files ", "status", ret_str=True)
-    progress_dirs = track(os.listdir(raw_dir), description=desc, transient=True)
-    for sub_dir in progress_dirs:
-        sub_dir_path = os.path.join(raw_dir, sub_dir)
-        shutil.rmtree(sub_dir_path)
-
-    # Delete all tables in the SQLite db
-    with engine.begin() as connection:
-        tables = connection.execute(sa.text("SELECT name FROM sqlite_master WHERE type='table';")).fetchall()
-        desc = log("Dropping all tables in db ", "status", ret_str=True)
-        progress_tables = track(tables, description=desc, transient=True)
-        for table in progress_tables:
-            connection.execute(sa.text(f"DROP TABLE {table[0]}"))
+            df.to_sql(spotify, engine, if_exists="replace", index=False)
 
 
 if __name__ == "__main__":
