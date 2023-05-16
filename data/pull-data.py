@@ -12,17 +12,21 @@
 # NOTE: If you suspect any issues with the local data, you can try running this script with the "--clean" flag. This will
 #       clean it by deleting and re-downloading all data files and re-building the SQLite db.
 
-from ftplib import FTP
-from rich.progress import track
-from rich import print
-import pandas as pd
 import os
-import sys
-import zipfile
+import pandas as pd
+import re
 import shutil
 import sqlalchemy as sa
+import sys
+import zipfile
+
+from ftplib import FTP
 from kaggle.api.kaggle_api_extended import KaggleApi
+from rich import print
+from rich.progress import track
+
 from logger import log
+
 
 # globals
 raw_dir: str = "raw"
@@ -40,29 +44,24 @@ def main():
     ftp_uri: str = "opendata.dwd.de"
     data_sources = [
         {
-            "name": "station_data",
-            "path": "climate_environment/CDC/help/RR_Tageswerte_Beschreibung_Stationen.txt",
-            "columns": ["column1", "column2", "column3"]
-        },
-        {
             "name": "rain_data",
             "path": "climate_environment/CDC/observations_germany/climate/daily/more_precip/historical/",
-            "columns": ["STATIONS_ID", "MESS_DATUM", "  RS", " RSF"]
+            "columns": ["STATIONS_ID", "MESS_DATUM", "  RS", " RSF"],
         },
         {
             "name": "cloud_data",
             "path": "climate_environment/CDC/observations_germany/climate/subdaily/cloudiness/historical/",
-            "columns": ["STATIONS_ID", "MESS_DATUM", "N_TER", "CD_TER"]
+            "columns": ["STATIONS_ID", "MESS_DATUM", "N_TER", "CD_TER"],
         },
         {
             "name": "temperature_data",
             "path": "climate_environment/CDC/observations_germany/climate/subdaily/air_temperature/historical/",
-            "columns": ["STATIONS_ID", "MESS_DATUM", "TT_TER", "RF_TER"]
+            "columns": ["STATIONS_ID", "MESS_DATUM", "TT_TER", "RF_TER"],
         },
         {
             "name": "wind_data",
             "path": "climate_environment/CDC/observations_germany/climate/subdaily/wind/historical/",
-            "columns": ["STATIONS_ID", "MESS_DATUM", "DK_TER", "FK_TER"]
+            "columns": ["STATIONS_ID", "MESS_DATUM", "DK_TER", "FK_TER"],
         }
     ]
     # list of weather acronyms:
@@ -125,12 +124,23 @@ def dwd_download(ftp_uri: str, data_src_name: str, path: str):
         files = ftp.nlst()
     else:
         files = [file_name]
+
+    # Filter for right timeframe (2017-2020)
+    filtered_files: list[str] = []
+    for file in files:
+        match = re.search(r"(\d{8})_(\d{8})", file)
+        if match:
+            start_date, end_date = match.group(1), match.group(2)
+            if start_date <= "20170125" and end_date >= "20201130":
+                filtered_files.append(file)
+
+    # Create target directory
     raw_data_directory: str = os.path.join(raw_dir, data_src_name)
     os.makedirs(raw_data_directory, exist_ok=True)
 
     # Download each file
     desc = log(f"Downloading {data_src_name} from server ", "status", ret_str=True)
-    progress = track(files, description=desc, transient=True)
+    progress = track(filtered_files, description=desc, transient=True)
     for file in progress:
         local_filename: str = os.path.join(raw_data_directory, file)
         with open(local_filename, "wb") as f:
@@ -168,6 +178,8 @@ def kaggle_extract_to_db(data_src_name: str, zip_name: str, member_file_name: st
     with zipfile.ZipFile(data_src_path, "r") as zip_ref:
         with zip_ref.open(name=member_file_name, mode="r") as tmpfile:
             df = pd.read_csv(tmpfile)
+            # Filter to only include rows where country is Germany
+            df = df[df['country'] == 'Germany']
             # Store the data into the SQLiteDB
             df.to_sql(data_src_name, engine, if_exists="replace", index=False)
 
@@ -175,17 +187,17 @@ def kaggle_extract_to_db(data_src_name: str, zip_name: str, member_file_name: st
 def clean_data():
     # Remove all subdirectories in the raw data directory
     desc = log("Removing raw data files ", "status", ret_str=True)
-    progress = track(os.listdir(raw_dir), description=desc, transient=True)
-    for sub_dir in progress:
+    progress_dirs = track(os.listdir(raw_dir), description=desc, transient=True)
+    for sub_dir in progress_dirs:
         sub_dir_path = os.path.join(raw_dir, sub_dir)
         shutil.rmtree(sub_dir_path)
 
     # Delete all tables in the SQLite db
     with engine.begin() as connection:
         tables = connection.execute(sa.text("SELECT name FROM sqlite_master WHERE type='table';")).fetchall()
-        desc = log("Droping all tables in db ", "status", ret_str=True)
-        progress = track(tables, description=desc, transient=True)
-        for table in tables:
+        desc = log("Dropping all tables in db ", "status", ret_str=True)
+        progress_tables = track(tables, description=desc, transient=True)
+        for table in progress_tables:
             connection.execute(sa.text(f"DROP TABLE {table[0]}"))
 
 
