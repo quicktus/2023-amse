@@ -9,15 +9,17 @@
 #   - Temperature    https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/subdaily/air_temperature/
 #   - Wind           https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/subdaily/wind/
 
-# NOTE: If you suspect any issues with the downloaded files, you can delete or move the respective (sub-)directory
-#       containing the downloaded files. Running the script again will re-download the contents of the directory.
+# NOTE: If you suspect any issues with the local data, you can try running this script with the "--clean" flag. This will
+#       clean it by deleting and re-downloading all data files and re-building the SQLite db.
 
 from ftplib import FTP
 from rich.progress import track
 from rich import print
 import pandas as pd
 import os
+import sys
 import zipfile
+import shutil
 import sqlalchemy as sa
 from kaggle.api.kaggle_api_extended import KaggleApi
 from logger import log
@@ -66,6 +68,10 @@ def main():
     # list of weather acronyms:
     # https://www.noaa.gov/jetstream/appendix/weather-acronyms
 
+    if "--clean" in sys.argv:
+        clean_data()
+        log("Cleaned raw data directory and SQLite database", "success")
+
     log(f"Pipeline started", timestamp=True)
 
     # Working with the kaggle API requires an API Token, see:
@@ -88,7 +94,7 @@ def main():
     else:
         print(log(f"Extracting {spotify} into database", "status", ret_str=True), end= "\r")
         kaggle_extract_to_db(spotify, spotify_zip_name, spotify_member_name)
-        log(f"Extracted {spotify}", "success")
+        log((f"Extracted {spotify}" + " "*15), "success")
 
     for data_src in data_sources:
         if(os.path.exists(os.path.join(raw_dir, data_src['name']))):
@@ -110,8 +116,8 @@ def dwd_download(ftp_uri: str, data_src_name: str, path: str):
     # Connect to FTP server and navigate to the target directory
     ftp = FTP(ftp_uri)
     ftp.login()
-    folder_path, file_name = os.path.split(path)
-    ftp.cwd(folder_path)
+    directory_path, file_name = os.path.split(path)
+    ftp.cwd(directory_path)
 
     # Get a list of all files
     files: list[str] = None
@@ -137,13 +143,13 @@ def dwd_download(ftp_uri: str, data_src_name: str, path: str):
 
 
 def dwd_extract_to_db(data_src_name: str, filter_items: str):
-    folder: str = os.path.join(raw_dir, data_src_name)
-    # Get a list of all zip files in the folder
-    zip_files = [file for file in os.listdir(folder) if file.endswith(".zip")]
+    directory: str = os.path.join(raw_dir, data_src_name)
+    # Get a list of all zip files in the directory
+    zip_files = [file for file in os.listdir(directory) if file.endswith(".zip")]
     # Iterate over the zips with a progress bar
     desc = log(f"Extracting {data_src_name} into database ", "status", ret_str=True)
     for zip_file in track(zip_files, description=desc, transient=True):
-        zip_path: str = os.path.join(folder, zip_file)
+        zip_path: str = os.path.join(directory, zip_file)
         with zipfile.ZipFile(zip_path, "r") as zip_ref:
             # Get a list of member files contained in the zip file (excluding metadata files)
             member_files = [member for member in zip_ref.namelist() if not member.startswith("Metadaten_")]
@@ -164,6 +170,24 @@ def kaggle_extract_to_db(data_src_name: str, zip_name: str, member_file_name: st
             df = pd.read_csv(tmpfile)
             # Store the data into the SQLiteDB
             df.to_sql(data_src_name, engine, if_exists="replace", index=False)
+
+
+def clean_data():
+    # Remove all subdirectories in the raw data directory
+    desc = log("Removing raw data files ", "status", ret_str=True)
+    progress = track(os.listdir(raw_dir), description=desc, transient=True)
+    for sub_dir in progress:
+        sub_dir_path = os.path.join(raw_dir, sub_dir)
+        shutil.rmtree(sub_dir_path)
+
+    # Delete all tables in the SQLite db
+    with engine.begin() as connection:
+        tables = connection.execute(sa.text("SELECT name FROM sqlite_master WHERE type='table';")).fetchall()
+        desc = log("Droping all tables in db ", "status", ret_str=True)
+        progress = track(tables, description=desc, transient=True)
+        for table in tables:
+            connection.execute(sa.text(f"DROP TABLE {table[0]}"))
+
 
 if __name__ == "__main__":
     main()
