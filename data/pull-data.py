@@ -36,7 +36,7 @@ FTP_URI: str = "opendata.dwd.de"
 engine = sa.create_engine(DB_CONNECTION_URI)
 
 def main():
-    # Clean data if "--clean" flag is present
+   # Clean data if "--clean" flag is present
     if "--clean" in sys.argv:
         clean_data()
 
@@ -63,6 +63,7 @@ def main():
             else:
                 download_weather_data(data_src['name'], data_src['path'])
             extract_weather_data_to_db(data_src['name'], data_src['columns'], data_src['new_columns'])
+
 
     log("Pipeline completed", timestamp=True)
 
