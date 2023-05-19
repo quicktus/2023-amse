@@ -62,7 +62,7 @@ def main():
                 log(f"Found raw {data_src['name']} files")
             else:
                 download_weather_data(data_src['name'], data_src['path'])
-            extract_weather_data_to_db(data_src['name'], data_src['columns'])
+            extract_weather_data_to_db(data_src['name'], data_src['columns'], data_src['new_columns'])
 
     log("Pipeline completed", timestamp=True)
 
@@ -148,7 +148,7 @@ def download_weather_data(data_src_name: str, path: str):
     log(f"Downloaded {data_src_name}", "success")
 
 
-def extract_weather_data_to_db(data_src_name: str, filter_items: str):
+def extract_weather_data_to_db(data_src_name: str, cols: str, new_cols: str):
     """Extracts DWD (German Weather Service) data to the database."""
     try:
         directory: str = os.path.join(RAW_DIR, data_src_name)
@@ -166,7 +166,9 @@ def extract_weather_data_to_db(data_src_name: str, filter_items: str):
                     with zip_ref.open(name=member, mode="r") as tmpfile:
                         df = pd.read_csv(tmpfile, sep=";")
                         # Remove unnecessary columns from the DataFrame
-                        df = df.filter(items=filter_items)
+                        df = df.filter(items=cols)
+                        # Rename columns to a more readable format
+                        df = df.rename(columns=dict(zip(cols, new_cols)))
                         # Store the data into the SQLiteDB
                         df.to_sql(data_src_name, engine, if_exists="append", index=False)
     except:
