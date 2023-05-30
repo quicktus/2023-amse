@@ -15,6 +15,7 @@
 #       clean it by deleting and re-downloading all data files and re-building the SQLite db.
 
 import os
+import time
 import pandas as pd
 import re
 import shutil
@@ -283,13 +284,15 @@ def get_spotify_metadata(spotify: str):
         desc = log(f"Getting {spotify} track metadata from server ", "status", ret_str=True)
         progress = track(tracks_100, description=desc, transient=True)
         for spotify_track in progress:
-            try:
-                new_features = sp.audio_features(spotify_track)
-                new_features = pd.DataFrame.from_dict(new_features)
-                audio_features = pd.concat([audio_features, new_features], join="inner", sort=True)
-            except:
-                print(f"error: {spotify_track} not found")
-                break
+            while True:
+                try:
+                    new_features = sp.audio_features(spotify_track)
+                    new_features = pd.DataFrame.from_dict(new_features)
+                    audio_features = pd.concat([audio_features, new_features], join="inner", sort=True)
+                    break
+                except:
+                    # The Spotify API rate limit is not publicly documented, but this seems to work
+                    time.sleep(20)
     except:
         log(f"Could not get {spotify} track metadata from server", "error")
         return None
