@@ -69,6 +69,7 @@ def main():
                 download_weather_data(data_src['name'], data_src['path'])
             extract_weather_data_to_db(data_src['name'], data_src['columns'], data_src['new_columns'])
 
+
     log("Pipeline completed", timestamp=True)
 
 
@@ -325,7 +326,6 @@ def get_spotify_metadata(spotify: str):
     # "uri": The Spotify URI for the track.
     # "valence": A measure from 0.0 to 1.0 describing the musical positiveness conveyed by a track, with higher values indicating more positive emotions.
     # for a full description of the audio features, see https://developer.spotify.com/documentation/web-api/reference/get-audio-features
-
 
 
 if __name__ == "__main__":

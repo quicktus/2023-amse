@@ -3,7 +3,7 @@ data_sources = [
         "name": "rain_data",
         "path": "climate_environment/CDC/observations_germany/climate/daily/more_precip/historical/",
         "columns": ["STATIONS_ID", "MESS_DATUM", "  RS", " RSF", "SH_TAG", "NSH_TAG"], # NOTE: the spaces in the column names are intentional
-        "new_columns": ["stations_id", "mess_datum", "niederschlagshoehe_mm", "niederschlagsform", "schneehöhe_cm", "neuschneehöhe_cm"],
+        "new_columns": ["stations_id", "mess_datum", "niederschlagshoehe_mm", "niederschlagsform", "schneehoehe_cm", "neuschneehoehe_cm"],
     },
     {
         "name": "cloud_data",
@@ -21,7 +21,7 @@ data_sources = [
         "name": "wind_data",
         "path": "climate_environment/CDC/observations_germany/climate/subdaily/wind/historical/",
         "columns": ["STATIONS_ID", "MESS_DATUM", "DK_TER", "FK_TER"],
-        "new_columns": ["stations_id", "mess_datum", "windrichtung", "windstärke"],
+        "new_columns": ["stations_id", "mess_datum", "windrichtung", "windstaerke"],
     }
 ]
 
