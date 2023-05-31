@@ -39,6 +39,10 @@ DB_CONNECTION_URI = "sqlite:///../data.sqlite"
 FTP_URI: str = "opendata.dwd.de"
 engine = sa.create_engine(DB_CONNECTION_URI)
 
+# observation period of the spotify data set
+start_date = pd.to_datetime('2017-01-25')
+end_date = pd.to_datetime('2020-11-30')
+
 def main():
     # Clean data if "--clean" flag is present
     if "--clean" in sys.argv:
@@ -130,8 +134,8 @@ def download_weather_data(data_src_name: str, path: str):
         for file in files:
             match = re.search(r"(\d{8})_(\d{8})", file)
             if match:
-                start_date, end_date = match.group(1), match.group(2)
-                if start_date <= "20170125" and end_date >= "20201130":
+                file_start_date, file_end_date = match.group(1), match.group(2)
+                if file_start_date <= "20170125" and file_end_date >= "20201130":
                     filtered_files.append(file)
 
         # Create target directory
@@ -175,6 +179,10 @@ def extract_weather_data_to_db(data_src_name: str, cols: str, new_cols: str):
                         df = df.filter(items=cols)
                         # Rename columns to a more readable format
                         df = df.rename(columns=dict(zip(cols, new_cols)))
+                        # Convert mess_datum column to datetime format
+                        df["mess_datum"] = pd.to_datetime(df["mess_datum"], format="ISO8601")
+                        # Filter dates between 2017.01.25 and 2020.11.30 (inclusive)
+                        df = df[(df['mess_datum'] >= start_date) & (df['mess_datum'] <= end_date)]
                         # Store the data into the SQLiteDB
                         df.to_sql(data_src_name, engine, if_exists="append", index=False)
     except:
