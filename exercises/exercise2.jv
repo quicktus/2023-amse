@@ -1,0 +1,76 @@
+// source: https://mobilithek.info/offers/-8739430008147831066
+
+pipeline Trainstops {
+
+	TrainstopsExtractor
+		-> TrainstopsTextFileInterpreter
+		-> TrainstopsCSVInterpreter
+		-> TrainstopsTableInterpreter
+		-> TrainstopsLoader;
+
+	block TrainstopsExtractor oftype HttpExtractor {
+		url: "https://download-data.deutschebahn.com/static/datasets/haltestellen/D_Bahnhof_2020_alle.CSV";
+	}
+
+	block TrainstopsTextFileInterpreter oftype TextFileInterpreter {}
+
+	block TrainstopsCSVInterpreter oftype CSVInterpreter {
+		delimiter: ";";
+	}
+
+	block TrainstopsTableInterpreter oftype TableInterpreter {
+		header: true;
+		columns: [
+			"EVA_NR" oftype integer,
+			"DS100" oftype text,
+			"IFOPT" oftype IFOPTType,
+			"NAME" oftype text,
+			"Verkehr" oftype VerkehrType,
+			"Laenge" oftype GeoCoordinateType,
+			"Breite" oftype GeoCoordinateType,
+			"Betreiber_Name" oftype text,
+			"Betreiber_Nr" oftype integer,
+			//NOTE: implicitly drops Status column
+		];
+	}
+
+	block TrainstopsLoader oftype SQLiteLoader {
+		file: "trainstops.sqlite";
+		table: "trainstops";
+	}
+}
+
+valuetype VerkehrType oftype text {
+	constraints: [
+		ValidVerkehr
+	];
+}
+
+constraint ValidVerkehr oftype AllowlistConstraint {
+	allowlist: ["FV", "RV", "nur DPN"];
+}
+
+valuetype GeoCoordinateType oftype decimal {
+	constraints: [
+		ValidGeoCoordinate
+	];
+}
+
+constraint ValidGeoCoordinate oftype RangeConstraint {
+	lowerBound: -90;
+	upperBound: 90;
+}
+
+valuetype IFOPTType oftype text {
+	constraints: [
+		ValidIFOPT
+	];
+}
+
+constraint ValidIFOPT oftype RegexConstraint {
+	// Valid "IFOPT" values follow this pattern:
+	// <exactly two characters>:<any amount of numbers>:<any amount of numbers><optionally another colon followed by any amount of numbers>
+	// NOTE: The implemented regex pattern is more restrictive than described above. However, these additional restrictions are considered reasonable.
+	//       The following pattern accurately represents the description: ^.{2}:\d*:\d*(:\d*)?$
+	regex: /[a-z]{2}:\d+:\d+(:\d+)?$/;
+}
