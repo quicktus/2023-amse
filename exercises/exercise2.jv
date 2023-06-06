@@ -57,7 +57,7 @@ valuetype GeoCoordinateType oftype decimal {
 }
 
 constraint ValidGeoCoordinate oftype RangeConstraint {
-	lowerBound: -90;
+	lowerBound: -90; // The suggestion jayvee raises here is likely a bug, see https://github.com/jvalue/jayvee/issues/349
 	upperBound: 90;
 }
 
