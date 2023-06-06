@@ -180,7 +180,10 @@ def extract_weather_data_to_db(data_src_name: str, cols: str, new_cols: str):
                         # Rename columns to a more readable format
                         df = df.rename(columns=dict(zip(cols, new_cols)))
                         # Convert mess_datum column to datetime format
-                        df["mess_datum"] = pd.to_datetime(df["mess_datum"], format="ISO8601")
+                        try:
+                            df["mess_datum"] = pd.to_datetime(df["mess_datum"], format="%Y%m%d%H")
+                        except:
+                            df["mess_datum"] = pd.to_datetime(df["mess_datum"], format="%Y%m%d")
                         # Filter dates between 2017.01.25 and 2020.11.30 (inclusive)
                         df = df[(df['mess_datum'] >= start_date) & (df['mess_datum'] <= end_date)]
                         # Store the data into the SQLiteDB
@@ -235,8 +238,19 @@ def extract_spotify_data_to_db(spotify: str):
         zip_ref = zipfile.ZipFile(data_src_path, "r")
         tmpfile = zip_ref.open(name=MEMBER_NAME, mode="r")
         df = pd.read_csv(tmpfile)
+
         # Filter to only include rows where country is Germany
-        df = df[df['country'] == 'Germany']
+        df = df[df["country"] == "Germany"]
+        # Drop the unnecessary columns
+        df.drop(["Unnamed: 0", "country"], axis=1, inplace=True)
+        # Convert the "date" column to pd.datetime
+        df["date"] = pd.to_datetime(df["date"], format="%d/%m/%Y")
+        # Change the "position" column to integer
+        df["position"] = df["position"].astype(int)
+        # convert uri to track id
+        df["uri"] = df["uri"].str.strip()
+        df["uri"] = df["uri"].apply(lambda uri: uri.split("/")[-1])
+        df.rename(columns={"uri": "track_id"}, inplace=True)
         # Store the data into the SQLiteDB
         df.to_sql(spotify, engine, if_exists="replace", index=False)
     except:
@@ -254,7 +268,7 @@ def get_spotify_metadata(spotify: str):
     tracks = None
     try:
         connection = engine.connect()
-        tracks = connection.execute(sa.text(f"SELECT DISTINCT uri FROM {spotify};")).fetchall()
+        tracks = connection.execute(sa.text(f"SELECT DISTINCT track_id FROM {spotify};")).fetchall()
         assert tracks is not None
     except:
         log(f"Could not get {spotify} from database", "error")
@@ -307,12 +321,16 @@ def get_spotify_metadata(spotify: str):
         return None
 
     try:
+        # create common column "track_id"
+        audio_features["uri"] = audio_features["uri"].apply(lambda uri: uri.split(":")[-1])
+        audio_features.rename(columns={"uri": "track_id"}, inplace=True)
         # Store metadata in the database
         audio_features.to_sql("audio_features", engine, if_exists="replace", index=False)
     except:
         log(f"Could not store {spotify} track metadata in database", "error")
         return None
 
+    log(f"Extracted {spotify} track metadata", "success")
 
     # brief summary of spotify's audio features:
     # "acousticness": A measure from 0.0 to 1.0 indicating the confidence of whether a track is acoustic, with 1.0 representing high confidence in its acoustic nature.
