@@ -54,6 +54,7 @@ def main():
     if is_test:
         log("The test flag is set. Only use this flag for testing, the resulting data will be incomplete. DO NOT USE FOR DATA ANALYSIS!", "warning")
         clean_data()
+        os.makedirs(RAW_DIR, exist_ok=True)
 
     log("Pipeline started", timestamp=True)
 
@@ -225,6 +226,7 @@ def download_spotify_data(spotify: str):
     print(log(f"Downloading {spotify} from server", "status", ret_str=True), end= "\r")
 
     # Download the dataset
+    api.dataset_download_files(spotify_uri, path=os.path.join(RAW_DIR, spotify)) #HACK: This is a workaround for a bug in the CI action. Remove this line when the bug is fixed.
     try:
         api.dataset_download_files(spotify_uri, path=os.path.join(RAW_DIR, spotify))
     except:

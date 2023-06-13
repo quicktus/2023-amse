@@ -12,6 +12,7 @@ def main():
     os.makedirs("/home/runner/.kaggle", exist_ok=True)
     with open("/home/runner/.kaggle/kaggle.json", "w") as file:
         file.write(kaggle_str)
+    os.chmod("/home/runner/.kaggle/kaggle.json", 0o600)
 
     # spotify
     SPOTIFY_CLIENT_ID = sys.argv[3]
@@ -20,6 +21,8 @@ def main():
     spotify_str = f"{SPOTIFY_CLIENT_ID}\n{SPOTIFY_CLIENT_SECRET}\n"
     with open("./data/spotify_credentials.txt", "w") as file:
         file.write(spotify_str)
+
+    print("secrets are all set up.")
 
 if __name__ == "__main__":
     main()
