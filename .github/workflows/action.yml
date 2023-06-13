@@ -12,6 +12,24 @@ jobs:
         uses: actions/checkout@v3
       - run: echo "💡 The ${{ github.repository }} repository has been cloned to the runner."
       - run: echo "🖥️ The workflow is now ready to test your code on the runner."
+      - name: Check if secrets exist
+        run: |
+          if [[ -z "${{ secrets.KAGGLE_KEY }}" ]]; then
+            echo "KAGGLE_KEY secret does not exist."
+            exit 1
+          fi
+          if [[ -z "${{ secrets.KAGGLE_USERNAME }}" ]]; then
+            echo "KAGGLE_USERNAME secret does not exist."
+            exit 1
+          fi
+          if [[ -z "${{ secrets.SPOTIFY_CLIENT_ID }}" ]]; then
+            echo "SPOTIFY_CLIENT_ID secret does not exist."
+            exit 1
+          fi
+          if [[ -z "${{ secrets.SPOTIFY_CLIENT_SECRET }}" ]]; then
+            echo "SPOTIFY_CLIENT_SECRET secret does not exist."
+            exit 1
+          fi
       - name: Set up Python
         uses: actions/setup-python@v2
         with:
@@ -20,4 +38,4 @@ jobs:
         run: pip install -r requirements.txt
       - name: Run tests.sh
         run: bash project/tests.sh
-      - run: echo "job completed."
+      - run: echo "Job completed."

@@ -219,11 +219,12 @@ def download_spotify_data(spotify: str):
         # use gh secrets
         KAGGLE_KEY = os.environ.get("KAGGLE_KEY")
         KAGGLE_USERNAME = os.environ.get("KAGGLE_USERNAME")
-        print(len(KAGGLE_KEY), len(KAGGLE_USERNAME))
+
         json_str = '{"username":"' + KAGGLE_USERNAME + '","key":"' + KAGGLE_KEY + '"}'
         os.makedirs("/home/runner/.kaggle", exist_ok=True)
-        with open("/home/runner/.kaggle/kaggle.json", 'w') as file:
+        with open("/home/runner/.kaggle/kaggle.json", "w") as file:
             file.write(json_str)
+
     try:
         api = KaggleApi()
         api.authenticate()
