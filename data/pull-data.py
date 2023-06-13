@@ -37,7 +37,9 @@ from logger import log
 RAW_DIR: str = "raw"
 DB_CONNECTION_URI = "sqlite:///../data.sqlite"
 FTP_URI: str = "opendata.dwd.de"
+
 engine = sa.create_engine(DB_CONNECTION_URI)
+is_test = "--test" in sys.argv
 
 # observation period of the spotify data set
 start_date = pd.to_datetime('2017-01-25')
@@ -46,6 +48,11 @@ end_date = pd.to_datetime('2020-11-30')
 def main():
     # Clean data if "--clean" flag is present
     if "--clean" in sys.argv:
+        clean_data()
+
+    # Pull just a small subset of data to speed up test execution time - DO NOT USE FOR DATA ANALYSIS
+    if is_test:
+        log("The test flag is set. Only use this flag for testing, the resulting data will be incomplete. DO NOT USE FOR DATA ANALYSIS!", "warning")
         clean_data()
 
     log("Pipeline started", timestamp=True)
@@ -137,6 +144,9 @@ def download_weather_data(data_src_name: str, path: str):
                 file_start_date, file_end_date = match.group(1), match.group(2)
                 if file_start_date <= "20170125" and file_end_date >= "20201130":
                     filtered_files.append(file)
+
+        if is_test:
+            filtered_files = filtered_files[:3]
 
         # Create target directory
         raw_data_directory: str = os.path.join(RAW_DIR, data_src_name)
@@ -268,7 +278,10 @@ def get_spotify_metadata(spotify: str):
     tracks = None
     try:
         connection = engine.connect()
-        tracks = connection.execute(sa.text(f"SELECT DISTINCT track_id FROM {spotify};")).fetchall()
+        if is_test:
+            tracks = connection.execute(sa.text(f"SELECT DISTINCT track_id FROM {spotify} LIMIT 10;")).fetchall()
+        else:
+            tracks = connection.execute(sa.text(f"SELECT DISTINCT track_id FROM {spotify};")).fetchall()
         assert tracks is not None
     except:
         log(f"Could not get {spotify} from database", "error")
@@ -285,13 +298,18 @@ def get_spotify_metadata(spotify: str):
 
     # Read the Spotify credentials from a file
     sp, SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET = None, None, None
-    try:
-        lines = open("./spotify_credentials.txt", "r").readlines()
-        SPOTIFY_CLIENT_ID = lines[0].strip()
-        SPOTIFY_CLIENT_SECRET = lines[1].strip()
-    except:
-        log("Could not read Spotify credentials file", "error")
-        return None
+
+    if is_test:
+        SPOTIFY_CLIENT_ID = os.environ.get("SPOTIFY_CLIENT_ID")
+        SPOTIFY_CLIENT_SECRET = os.environ.get("SPOTIFY_CLIENT_SECRET")
+    else:
+        try:
+            lines = open("./spotify_credentials.txt", "r").readlines()
+            SPOTIFY_CLIENT_ID = lines[0].strip()
+            SPOTIFY_CLIENT_SECRET = lines[1].strip()
+        except:
+            log("Could not read Spotify credentials file", "error")
+            return None
 
     # Authenticate with the Spotify API
     try:
