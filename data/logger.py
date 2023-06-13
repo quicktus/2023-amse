@@ -11,6 +11,7 @@ msgtype_prefixes: dict = {
     "failure":  ["bold red",      "-"],
     "debug":    ["bold blue",     "DEBUG"],
     "error":    ["bold red",      "!"],
+    "warning":  ["bold yellow",   "!"],
 }
 
 def log(message: str, msg_type: str = "info", timestamp = False, ret_str = False):
