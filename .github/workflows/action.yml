@@ -30,12 +30,16 @@ jobs:
             echo "SPOTIFY_CLIENT_SECRET secret does not exist."
             exit 1
           fi
+          echo "secret check passed."
       - name: Set up Python
         uses: actions/setup-python@v2
         with:
           python-version: 3.11.3
       - name: Install dependencies
         run: pip install -r requirements.txt
+      - name: set up secrets
+        run: |
+          python data/setup_test_secrets.py ${{ secrets.KAGGLE_KEY }} ${{ secrets.KAGGLE_USERNAME }} ${{ secrets.SPOTIFY_CLIENT_ID }} ${{ secrets.SPOTIFY_CLIENT_SECRET }}
       - name: Run tests.sh
         run: bash project/tests.sh
       - run: echo "Job completed."

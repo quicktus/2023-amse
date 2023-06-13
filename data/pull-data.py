@@ -215,16 +215,6 @@ def download_spotify_data(spotify: str):
     spotify_uri: str = "pepepython/spotify-huge-database-daily-charts-over-3-years"
 
     # Authenticate with the Kaggle API
-    if is_test:
-        # use gh secrets
-        KAGGLE_KEY = os.environ.get("KAGGLE_KEY")
-        KAGGLE_USERNAME = os.environ.get("KAGGLE_USERNAME")
-
-        json_str = '{"username":"' + KAGGLE_USERNAME + '","key":"' + KAGGLE_KEY + '"}'
-        os.makedirs("/home/runner/.kaggle", exist_ok=True)
-        with open("/home/runner/.kaggle/kaggle.json", "w") as file:
-            file.write(json_str)
-
     try:
         api = KaggleApi()
         api.authenticate()
@@ -309,19 +299,13 @@ def get_spotify_metadata(spotify: str):
     # Read the Spotify credentials from a file
     sp, SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET = None, None, None
 
-    if is_test:
-        # use gh secrets
-        SPOTIFY_CLIENT_ID = os.environ.get("SPOTIFY_CLIENT_ID")
-        SPOTIFY_CLIENT_SECRET = os.environ.get("SPOTIFY_CLIENT_SECRET")
-    else:
-        # read from file
-        try:
-            lines = open("./spotify_credentials.txt", "r").readlines()
-            SPOTIFY_CLIENT_ID = lines[0].strip()
-            SPOTIFY_CLIENT_SECRET = lines[1].strip()
-        except:
-            log("Could not read Spotify credentials file", "error")
-            return None
+    try:
+        lines = open("./spotify_credentials.txt", "r").readlines()
+        SPOTIFY_CLIENT_ID = lines[0].strip()
+        SPOTIFY_CLIENT_SECRET = lines[1].strip()
+    except:
+        log("Could not read Spotify credentials file", "error")
+        return None
 
     # Authenticate with the Spotify API
     try:
