@@ -298,16 +298,27 @@ def get_spotify_metadata(spotify: str):
 
     tracks_100 = [tracks[i:i + 100] for i in range(0, len(tracks), 100)]
 
-    # Read the Spotify credentials from a file
     sp, SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET = None, None, None
 
-    try:
-        lines = open("./spotify_credentials.txt", "r").readlines()
-        SPOTIFY_CLIENT_ID = lines[0].strip()
-        SPOTIFY_CLIENT_SECRET = lines[1].strip()
-    except:
-        log("Could not read Spotify credentials file", "error")
-        return None
+    if is_test:
+        # Read the Spotify credentials from environment variables
+        try:
+            SPOTIFY_CLIENT_ID = os.environ["SPOTIFY_CLIENT_ID"]
+            assert SPOTIFY_CLIENT_ID is not None
+            SPOTIFY_CLIENT_SECRET = os.environ["SPOTIFY_CLIENT_SECRET"]
+            assert SPOTIFY_CLIENT_SECRET is not None
+        except:
+            log("Could not read Spotify credentials from environment variables", "error")
+            return None
+    else:
+        # Read the Spotify credentials from a file
+        try:
+            lines = open("./spotify_credentials.txt", "r").readlines()
+            SPOTIFY_CLIENT_ID = lines[0].strip()
+            SPOTIFY_CLIENT_SECRET = lines[1].strip()
+        except:
+            log("Could not read Spotify credentials file", "error")
+            return None
 
     # Authenticate with the Spotify API
     try:
