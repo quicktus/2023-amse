@@ -14,7 +14,6 @@ jobs:
       - name: Print job info
         run: |
           echo "job trigger: ${{ github.event_name }}"
-          echo "runner os: ${{ runner.os }}"
           echo "repository: ${{ github.repository }}"
           echo "branch: ${{ github.ref }}"
 
@@ -49,7 +48,7 @@ jobs:
           echo "Secrets set as environment variables."
 
       - name: Set up Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: 3.11
 
