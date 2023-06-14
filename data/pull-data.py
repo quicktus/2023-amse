@@ -15,13 +15,13 @@
 #       clean it by deleting and re-downloading all data files and re-building the SQLite db.
 
 import os
-import time
 import pandas as pd
 import re
 import shutil
 import spotipy
 import sqlalchemy as sa
 import sys
+import time
 import zipfile
 
 from ftplib import FTP
@@ -230,10 +230,10 @@ def download_spotify_data(spotify: str):
     try:
         api.dataset_download_files(spotify_uri, path=os.path.join(RAW_DIR, spotify))
     except:
-        log(f"Could not download {spotify}", "error")
+        log(f"Could not download {spotify}" + " " * 5, "error")
         return
 
-    log(f"Downloaded {spotify}" + " " * 42, "success")
+    log(f"Downloaded {spotify}" + " " * 15, "success")
     return
 
 
