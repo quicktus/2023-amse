@@ -56,14 +56,11 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
+      - name: Run Flake8 Linter
+        run: flake8
+
       - name: Run tests.sh
-        id: run-tests
-        run: |
-          start_time=$(date +%s)
-          bash project/tests.sh
-          end_time=$(date +%s)
-          duration=$((end_time - start_time))
-          echo "::set-output name=duration::$duration"
+        run: bash project/tests.sh
 
       - name: Notify on failure
         if: ${{ failure() }}

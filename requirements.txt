@@ -6,3 +6,4 @@ kaggle==1.5.13
 spotipy==2.23.0
 matplotlib==3.6.2
 pytest==7.3.1
+flake8==6.0.0
