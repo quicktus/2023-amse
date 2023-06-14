@@ -5,22 +5,23 @@ import datetime
 from rich import print
 
 msgtype_prefixes: dict = {
-    "info":     ["bold",          "*"],
-    "status":   ["bold magenta",  "x"],
-    "success":  ["bold green",    "+"],
-    "failure":  ["bold red",      "-"],
-    "debug":    ["bold blue",     "DEBUG"],
-    "error":    ["bold red",      "!"],
-    "warning":  ["bold yellow",   "!"],
+    "info":     ["bold",          "*"],  # noqa: E241
+    "status":   ["bold magenta",  "x"],  # noqa: E241
+    "success":  ["bold green",    "+"],  # noqa: E241
+    "failure":  ["bold red",      "-"],  # noqa: E241
+    "debug":    ["bold blue",     "DEBUG"],  # noqa: E241
+    "error":    ["bold red",      "!"],  # noqa: E241
+    "warning":  ["bold yellow",   "!"],  # noqa: E241
 }
 
-def log(message: str, msg_type: str = "info", timestamp = False, ret_str = False):
+
+def log(message: str, msg_type: str = "info", timestamp=False, ret_str=False):
     prefix_style, prefix_text = msgtype_prefixes[msg_type]
     if prefix_style is None:
         # invalid or default style
         prefix_style, prefix_text = msgtype_prefixes["info"]
 
-    time: str = (" " + datetime.datetime.now().strftime("%H:%M:%S"))  if timestamp else ""
+    time: str = (" " + datetime.datetime.now().strftime("%H:%M:%S")) if timestamp else ""
     # build message
     formatted_message = f"[[{prefix_style}]{prefix_text}[/{prefix_style}]]{time} {message}"
 

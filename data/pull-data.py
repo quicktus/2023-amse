@@ -45,6 +45,7 @@ is_test = "--test" in sys.argv
 start_date = pd.to_datetime('2017-01-25')
 end_date = pd.to_datetime('2020-11-30')
 
+
 def main():
     # Clean data if "--clean" flag is present
     if "--clean" in sys.argv:
@@ -52,7 +53,8 @@ def main():
 
     # Pull just a small subset of data to speed up test execution time - DO NOT USE FOR DATA ANALYSIS
     if is_test:
-        log("The test flag is set. Only use this flag for testing, the resulting data will be incomplete. DO NOT USE FOR DATA ANALYSIS!", "warning")
+        log("The test flag is set. Only use this flag for testing, the resulting data will be incomplete. "
+            "DO NOT USE FOR DATA ANALYSIS!", "warning")
         clean_data()
         os.makedirs(RAW_DIR, exist_ok=True)
 
@@ -63,7 +65,7 @@ def main():
     if sa.inspect(engine).has_table(spotify):
         log(f"Found {spotify} table")
     else:
-        if(os.path.exists(os.path.join(RAW_DIR, spotify))):
+        if (os.path.exists(os.path.join(RAW_DIR, spotify))):
             log(f"Found raw {spotify} files")
         else:
             download_spotify_data(spotify)
@@ -75,12 +77,11 @@ def main():
         if sa.inspect(engine).has_table(data_src["name"]):
             log(f"Found {data_src['name']} table")
         else:
-            if(os.path.exists(os.path.join(RAW_DIR, data_src['name']))):
+            if (os.path.exists(os.path.join(RAW_DIR, data_src['name']))):
                 log(f"Found raw {data_src['name']} files")
             else:
                 download_weather_data(data_src['name'], data_src['path'])
             extract_weather_data_to_db(data_src['name'], data_src['columns'], data_src['new_columns'])
-
 
     log("Pipeline completed", timestamp=True)
 
@@ -119,7 +120,7 @@ def download_weather_data(data_src_name: str, path: str):
 
     # Connect to FTP server and navigate to the target directory
     try:
-        ftp =  FTP(FTP_URI, timeout=20) # 20 second timeout
+        ftp = FTP(FTP_URI, timeout=20)  # 20 second timeout
         ftp.login()
     except:
         log("Failed to connect to FTP server", "error")
@@ -223,17 +224,16 @@ def download_spotify_data(spotify: str):
         log("Could not authenticate with Kaggle API", "error")
         return
 
-    print(log(f"Downloading {spotify} from server", "status", ret_str=True), end= "\r")
+    print(log(f"Downloading {spotify} from server", "status", ret_str=True), end="\r")
 
     # Download the dataset
-    api.dataset_download_files(spotify_uri, path=os.path.join(RAW_DIR, spotify)) #HACK: This is a workaround for a bug in the CI action. Remove this line when the bug is fixed.
     try:
         api.dataset_download_files(spotify_uri, path=os.path.join(RAW_DIR, spotify))
     except:
         log(f"Could not download {spotify}", "error")
         return
 
-    log(f"Downloaded {spotify}" + " "*42, "success")
+    log(f"Downloaded {spotify}" + " " * 42, "success")
     return
 
 
@@ -244,7 +244,7 @@ def extract_spotify_data_to_db(spotify: str):
     MEMBER_NAME: str = "Database to calculate popularity.csv"
     data_src_path: str = os.path.join(RAW_DIR, spotify, ZIP_NAME)
 
-    print(log(f"Extracting {spotify} into database", "status", ret_str=True), end= "\r")
+    print(log(f"Extracting {spotify} into database", "status", ret_str=True), end="\r")
 
     try:
         zip_ref = zipfile.ZipFile(data_src_path, "r")
@@ -266,15 +266,15 @@ def extract_spotify_data_to_db(spotify: str):
         # Store the data into the SQLiteDB
         df.to_sql(spotify, engine, if_exists="replace", index=False)
     except:
-        log((f"Could not extract {spotify}" + " "*7), "error")
+        log((f"Could not extract {spotify}" + " " * 7), "error")
 
-    log((f"Extracted {spotify}" + " "*15), "success")
+    log((f"Extracted {spotify}" + " " * 15), "success")
 
 
 def get_spotify_metadata(spotify: str):
     """Gets the metadata for each track through the Spotify API."""
 
-    print(log(f"Getting {spotify} track metadata", "status", ret_str=True), end= "\r")
+    print(log(f"Getting {spotify} track metadata", "status", ret_str=True), end="\r")
 
     # get a list of all tracks in the database
     tracks = None
@@ -291,10 +291,10 @@ def get_spotify_metadata(spotify: str):
 
     tracks = [track_row[0].strip() for track_row in tracks]
     try:
-        tracks.remove("N\A")
+        tracks.remove("N\\A")
         tracks.remove("#")
     except:
-        pass # ignore
+        pass  # ignore
 
     tracks_100 = [tracks[i:i + 100] for i in range(0, len(tracks), 100)]
 
@@ -329,7 +329,8 @@ def get_spotify_metadata(spotify: str):
         return None
 
     # Get the metadata for each track
-    audio_features = pd.DataFrame(columns = ["uri", "danceability", "energy", "key", "loudness", "mode", "speechiness", "acousticness", "instrumentalness", "liveness", "valence", "tempo", "duration_ms"])
+    audio_features = pd.DataFrame(columns=["uri", "danceability", "energy", "key", "loudness", "mode", "speechiness",
+                                  "acousticness", "instrumentalness", "liveness", "valence", "tempo", "duration_ms"])
     try:
         desc = log(f"Getting {spotify} track metadata from server ", "status", ret_str=True)
         progress = track(tracks_100, description=desc, transient=True)
@@ -341,7 +342,7 @@ def get_spotify_metadata(spotify: str):
                     audio_features = pd.concat([audio_features, new_features], join="inner", sort=True)
                     break
                 except:
-                    # The Spotify API rate limit is not publicly documented, but this seems to work
+                    # The exact Spotify API rate limit is not publicly documented, but this seems to work
                     time.sleep(20)
     except:
         log(f"Could not get {spotify} track metadata from server", "error")
@@ -358,27 +359,6 @@ def get_spotify_metadata(spotify: str):
         return None
 
     log(f"Extracted {spotify} track metadata", "success")
-
-    # brief summary of spotify's audio features:
-    # "acousticness": A measure from 0.0 to 1.0 indicating the confidence of whether a track is acoustic, with 1.0 representing high confidence in its acoustic nature.
-    # "analysis_url": A URL providing access to the full audio analysis of a track.
-    # "danceability": A number from 0.0 to 1.0 describing how suitable a track is for dancing based on tempo, rhythm stability, beat strength, and regularity.
-    # "duration_ms": The duration of the track in milliseconds.
-    # "energy": A measure from 0.0 to 1.0 representing the intensity and activity level of a track, with higher values indicating greater energy.
-    # "id": The unique Spotify ID assigned to a track.
-    # "instrumentalness": A measure from 0.0 to 1.0 predicting the likelihood of a track containing no vocal content, with higher values suggesting instrumental tracks.
-    # "key": The key in which the track is performed, mapped to standard Pitch Class notation.
-    # "liveness": A number from 0.0 to 1.0 indicating the probability of a track being performed live, with higher values suggesting a live recording.
-    # "loudness": The overall loudness of a track in decibels (dB), ranging from -60 to 0 dB.
-    # "mode": An integer representing the modality (major or minor) of a track, with 1 for major and 0 for minor.
-    # "speechiness": A number from 0.0 to 1.0 indicating the presence of spoken words in a track, with higher values suggesting more speech-like recordings.
-    # "tempo": The estimated tempo of a track in beats per minute (BPM).
-    # "time_signature": An estimated time signature specifying the number of beats in each bar, ranging from 3 to 7.
-    # "track_href": A link to the Web API endpoint providing detailed information about the track.
-    # "type": The object type, which is "audio_features" for audio feature objects.
-    # "uri": The Spotify URI for the track.
-    # "valence": A measure from 0.0 to 1.0 describing the musical positiveness conveyed by a track, with higher values indicating more positive emotions.
-    # for a full description of the audio features, see https://developer.spotify.com/documentation/web-api/reference/get-audio-features
 
 
 if __name__ == "__main__":
