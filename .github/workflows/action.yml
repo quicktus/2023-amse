@@ -1,18 +1,27 @@
 name: Continuous Integration and Deployment
-run-name: ${{ github.actor }} is using GitHub Actions to run a (simple) CI/CD workflow 🚀
-on: [push]
+
+on:
+  push:
+    branches:
+      - main
+      - dev
+
 jobs:
   Test-Pipeline:
     runs-on: ubuntu-latest
+
     steps:
-      - run: echo "🎉 The job was automatically triggered by a ${{ github.event_name }} event."
-      - run: echo "🐧 This job is now running on a ${{ runner.os }} server hosted by GitHub!"
-      - run: echo "🔎 The name of your branch is ${{ github.ref }} and your repository is ${{ github.repository }}."
+      - name: Print job info
+        run: |
+          echo "job trigger: ${{ github.event_name }}"
+          echo "runner os: ${{ runner.os }}"
+          echo "repository: ${{ github.repository }}"
+          echo "branch: ${{ github.ref }}"
+
       - name: Check out repository code
         uses: actions/checkout@v3
-      - run: echo "💡 The ${{ github.repository }} repository has been cloned to the runner."
-      - run: echo "🖥️ The workflow is now ready to test your code on the runner."
-      - name: Check if secrets exist and set them as environment variables
+
+      - name: Set up secrets
         run: |
           if [[ -z "${{ secrets.KAGGLE_KEY }}" ]]; then
             echo "KAGGLE_KEY secret does not exist."
@@ -30,22 +39,32 @@ jobs:
             echo "SPOTIFY_CLIENT_SECRET secret does not exist."
             exit 1
           fi
-          echo "all required secrets found."
+          echo "All required secrets found."
 
           echo "KAGGLE_USERNAME=${{ secrets.KAGGLE_USERNAME }}" >> $GITHUB_ENV
           echo "KAGGLE_KEY=${{ secrets.KAGGLE_KEY }}" >> $GITHUB_ENV
           echo "SPOTIFY_CLIENT_ID=${{ secrets.SPOTIFY_CLIENT_ID }}" >> $GITHUB_ENV
           echo "SPOTIFY_CLIENT_SECRET=${{ secrets.SPOTIFY_CLIENT_SECRET }}" >> $GITHUB_ENV
 
-          echo "secrets set as environment variables."
+          echo "Secrets set as environment variables."
+
       - name: Set up Python
         uses: actions/setup-python@v2
         with:
-          python-version: 3.11.3
+          python-version: 3.11
+
       - name: Install dependencies
         run: pip install -r requirements.txt
+
       - name: Run tests.sh
-        run: bash project/tests.sh
+        id: run-tests
+        run: |
+          start_time=$(date +%s)
+          bash project/tests.sh
+          end_time=$(date +%s)
+          duration=$((end_time - start_time))
+          echo "::set-output name=duration::$duration"
+
       - name: Notify on failure
         if: ${{ failure() }}
         run: |
@@ -57,4 +76,3 @@ jobs:
               "color": 16711680
             }]
           }' ${{ secrets.DISCORD_WEBHOOK_URL }}
-      - run: echo "Job completed."
