@@ -24,7 +24,7 @@ def main():
 
     # Validate data and drop invalid rows
     # CINs are strings with 5 characters all of which are digits (and can have a leading 0)
-    df = df[df["CIN"].str.match(r"\d{5}$")]  # TODO: check if this is right
+    df = df[df["CIN"].str.match(r"\d{5}$")]
 
     # All other cols should be positive integers > 0
     df = df.dropna()
