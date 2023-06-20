@@ -15,10 +15,12 @@ def main():
     excel_cols = ["A", "B", "C", "M", "W", "AG", "AQ", "BA", "BK", "BU"]
     col_indices = [excel_col_to_idx(col) for col in excel_cols]
     col_names = ["date", "CIN", "name", "petrol", "diesel", "gas", "electro", "hybrid", "plugInHybrid", "others"]
-    col_sqlite_types = [sa.types.TEXT, sa.types.TEXT, sa.types.TEXT, sa.types.INTEGER, sa.types.INTEGER, sa.types.INTEGER, sa.types.INTEGER, sa.types.INTEGER, sa.types.INTEGER, sa.types.INTEGER]
+    col_sqlite_types = [sa.types.TEXT, sa.types.TEXT, sa.types.TEXT, sa.types.INTEGER, sa.types.INTEGER, sa.types.INTEGER,
+                        sa.types.INTEGER, sa.types.INTEGER, sa.types.INTEGER, sa.types.INTEGER]
 
     # Download CSV file and reshape df
-    df = pd.read_csv(SOURCE_URI, sep=";", encoding="ISO-8859-1", skiprows=7, skipfooter=4, engine="python", usecols=col_indices, names=col_names, dtype={"CIN": str}, na_values="-")
+    df = pd.read_csv(SOURCE_URI, sep=";", encoding="ISO-8859-1", skiprows=7, skipfooter=4, engine="python", usecols=col_indices,
+                     names=col_names, dtype={"CIN": str}, na_values="-")
 
     # Validate data and drop invalid rows
     # CINs are strings with 5 characters all of which are digits (and can have a leading 0)
@@ -28,7 +30,7 @@ def main():
     df = df.dropna()
 
     mask = df.iloc[:, 3:].gt(0).any(axis=1)
-    df_filtered = df[mask]
+    df = df[mask]
 
     # Write the data into the SQLite database and assign fitting types
     engine = sa.create_engine("sqlite:///cars.sqlite")
