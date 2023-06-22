@@ -2,9 +2,9 @@
 #import "../slides_template/bipartite.typ": *
 
 #show: slides.with(
-    authors: ("Author A", "Author B"), short-authors: "Short author",
-    title: "Title", short-title: "Short title", subtitle: "Subtitle",
-    date: "Date",
+    authors: ("Kilian Wenker"), short-authors: "Short author",
+    title: "cool thing", short-title: "Short title", subtitle: "Advanced Methods of Software Engineering",
+    date: "2023-06-28",
     theme: bipartite-theme(),
 )
 
