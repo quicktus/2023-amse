@@ -2,6 +2,8 @@ data/raw/
 kaggle.json
 spotify_credentials.txt
 
+slides_template/*.pdf
+
 
 # Created by https://www.toptal.com/developers/gitignore/api/python
 # Edit at https://www.toptal.com/developers/gitignore?templates=python
