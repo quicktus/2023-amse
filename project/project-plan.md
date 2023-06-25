@@ -20,7 +20,7 @@ This dataset contains all songs in Spotify's daily top 200 charts over a 3-year 
 ### Datasource2: DWD Climate Data
 
 * Metadata URL: https://mobilithek.info/offers/-4979349128225020802
-* Data URL: https://opendata.dwd.de/climate
+* Data URL: https://opendata.dwd.de/climate_environment/
 * Data Type: various
 
 The data set is used for weather monitoring and forecasting purposes. It contains standardized meteorological measurement and observation data from various locations in Germany.

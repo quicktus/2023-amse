@@ -1,0 +1,74 @@
+name: Continuous Integration and Deployment
+
+on:
+  push:
+    branches:
+      - main
+      - dev
+
+jobs:
+  Test-Pipeline:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Print job info
+        run: |
+          echo "job trigger: ${{ github.event_name }}"
+          echo "repository: ${{ github.repository }}"
+          echo "branch: ${{ github.ref }}"
+
+      - name: Check out repository code
+        uses: actions/checkout@v3
+
+      - name: Set up secrets
+        run: |
+          if [[ -z "${{ secrets.KAGGLE_KEY }}" ]]; then
+            echo "KAGGLE_KEY secret does not exist."
+            exit 1
+          fi
+          if [[ -z "${{ secrets.KAGGLE_USERNAME }}" ]]; then
+            echo "KAGGLE_USERNAME secret does not exist."
+            exit 1
+          fi
+          if [[ -z "${{ secrets.SPOTIFY_CLIENT_ID }}" ]]; then
+            echo "SPOTIFY_CLIENT_ID secret does not exist."
+            exit 1
+          fi
+          if [[ -z "${{ secrets.SPOTIFY_CLIENT_SECRET }}" ]]; then
+            echo "SPOTIFY_CLIENT_SECRET secret does not exist."
+            exit 1
+          fi
+          echo "All required secrets found."
+
+          echo "KAGGLE_USERNAME=${{ secrets.KAGGLE_USERNAME }}" >> $GITHUB_ENV
+          echo "KAGGLE_KEY=${{ secrets.KAGGLE_KEY }}" >> $GITHUB_ENV
+          echo "SPOTIFY_CLIENT_ID=${{ secrets.SPOTIFY_CLIENT_ID }}" >> $GITHUB_ENV
+          echo "SPOTIFY_CLIENT_SECRET=${{ secrets.SPOTIFY_CLIENT_SECRET }}" >> $GITHUB_ENV
+
+          echo "Secrets set as environment variables."
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.11
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run Flake8 Linter
+        run: flake8
+
+      - name: Run tests.sh
+        run: bash project/tests.sh
+
+      - name: Notify on failure
+        if: ${{ failure() }}
+        run: |
+          curl -X POST -H 'Content-type: application/json' --data '{
+            "content": "Build failed: ${{ github.repository }} (${{ github.sha }})",
+            "embeds": [{
+              "title": "Info",
+              "url": "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}",
+              "color": 16711680
+            }]
+          }' ${{ secrets.DISCORD_WEBHOOK_URL }}
