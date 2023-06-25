@@ -1,3 +1,7 @@
+# exercises
+exercises/*.sqlite
+
+# project
 data/raw/
 kaggle.json
 spotify_credentials.txt
@@ -180,3 +184,4 @@ poetry.toml
 pyrightconfig.json
 
 # End of https://www.toptal.com/developers/gitignore/api/python
+
