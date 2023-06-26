@@ -2,7 +2,7 @@
 
 ## Summary
 
-This project aims to analyze correlations between popular songs (and their genres) and the weather conditions at the time the songs were popular. The project will attempt to identify possible relationships. Based on these, it will use the current weather conditions to suggest a "weather appropriate" song to the user.
+This project aims to analyze correlations between the popularity of music and the weather conditions at the time. The project will attempt to identify possible relationships. Based on these, it will use the current weather conditions to suggest a "weather appropriate" song to the user.
 
 ## Rationale
 
@@ -32,7 +32,7 @@ The data set is used for weather monitoring and forecasting purposes. It contain
 3. [Continuous Integration](https://github.com/quicktus/2023-amse/issues/3)
 4. [Data visualization](https://github.com/quicktus/2023-amse/issues/5)
 5. [Implement song recommendation](https://github.com/quicktus/2023-amse/issues/6)
-6. [Deployment](https://github.com/quicktus/2023-amse/issues/4)
+6. ~~[Deployment](https://github.com/quicktus/2023-amse/issues/4)~~
 
 ___
 
