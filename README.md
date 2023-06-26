@@ -1,4 +1,6 @@
-![logo](media/logo.png | width=200)
+<h1 align="center">
+  <img alt="Typst" src="media/logo.png" width="256" height="256">
+</h1>
 
 # Weather Conditions and Music Preferences
 
