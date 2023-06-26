@@ -7,6 +7,7 @@
 # Weather Conditions and Music Preferences
 
 [![Project Pipeline](https://github.com/quicktus/2023-amse/actions/workflows/action.yml/badge.svg?branch=main)](https://github.com/quicktus/2023-amse/actions/workflows/action.yml)
+[![MIT License](https://img.shields.io/badge/License-MIT-green.svg)](https://choosealicense.com/licenses/mit/)
 
 ## Summary
 This project explores the potential connection between music preferences and weather conditions. The analysis indicates that although some associations between music and weather were observed, they were not found to be statistically significant. I speculate that music preferences are influenced by various factors, with the impact of weather being minor.  
