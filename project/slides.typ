@@ -3,7 +3,7 @@
 
 #show: slides.with(
     authors: ("Kilian Wenker"), short-authors: "KW",
-    title: "Weather conditions and Music Preferences", subtitle: "Advanced Methods of Software Engineering",
+    title: "Weather Conditions and Music Preferences", subtitle: "Advanced Methods of Software Engineering",
     date: "2023-06-28",
     theme: bipartite-theme(),
 )
@@ -17,7 +17,7 @@
   #lorem(20)
 ]
 
-#slide(title: "Datasources")[
+#slide(title: "Data Sources")[
   *1. Weather data*
     - Daily Weather Data for Germany
     - Source: Deutscher Wetterdienst (DWD)

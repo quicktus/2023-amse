@@ -57,7 +57,7 @@
   }
 
   let displayed-title(slide-info) = if "title" in slide-info {
-    heading(level: 1, text(fill: my-bright, slide-info.title))
+    heading(level: 2, text(fill: my-bright, slide-info.title))
   } else {
     []
   }
@@ -117,10 +117,25 @@
     )
   }
 
+    let blank(slide-info, bodies) = {
+    if bodies.len() != 1 {
+      panic("blank variant of bipartite theme only supports one body per slide")
+    }
+    let body = bodies.first()
+
+    box(
+      width: 100%, height: 100%, outset: 0em, inset: (x: 1em), baseline: 0em,
+      stroke: none, fill: my-bright,
+      align(right + horizon, text(fill: my-dark, body))
+    )
+  }
+
   (
     "title slide": title-slide,
     "default": west,
     "east": east,
     "center split": center-split,
+    "blank": blank,
+    "image": image,
   )
 }
