@@ -34,9 +34,13 @@
     if bodies.len() != 0 {
         panic("title slide of bipartite theme does not support any bodies")
     }
-
     block(
-      width: 100%, height: 60%, outset: 0em, inset: 0em, breakable: false,
+      width: 100%, height: 35%, outset: 0em, inset: 0em, breakable: false,
+      stroke: none, spacing: 0em, fill: my-bright,
+      align(center + bottom, image(data.logo, width: 4cm))
+    )
+    block(
+      width: 100%, height: 25%, outset: 0em, inset: 0em, breakable: false,
       stroke: none, spacing: 0em, fill: my-bright,
       align(center + horizon, text(size: 1.7em, fill: my-dark, data.title))
     )
@@ -117,14 +121,14 @@
     )
   }
 
-    let blank(slide-info, bodies) = {
+  let blank(slide-info, bodies) = {
     if bodies.len() != 1 {
       panic("blank variant of bipartite theme only supports one body per slide")
     }
     let body = bodies.first()
 
     box(
-      width: 100%, height: 100%, outset: 0em, inset: (x: 1em), baseline: 0em,
+      width: 100%, height: 100%, outset: 0em, inset: 0em, baseline: 0em,
       stroke: none, fill: my-bright,
       align(right + horizon, text(fill: my-dark, body))
     )

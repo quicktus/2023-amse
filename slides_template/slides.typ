@@ -355,6 +355,7 @@
     short-title: none,
     short-authors: none,
     date: none,
+    logo: none,
     theme: slides-default-theme(),
     aspect-ratio: "16-9",
     handout: false,
@@ -379,6 +380,7 @@
         short-title: short-title,
         short-authors: short-authors,
         date: date,
+        logo: logo,
     )
     let the-theme = theme(data)
     global-theme.update(the-theme)
