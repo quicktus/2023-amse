@@ -1,4 +1,4 @@
-**:information_source:** _This repository is a student project focused on data engineering and data science using open data. It is part of the AMSE/SAKI course, conducted by the [FAU](https://fau.eu/) [Chair for Open-Source Software](https://oss.cs.fau.de/) during the summer semester of 2023._
+> **:information_source:** _This repository is a student project focused on data engineering and data science using open data. It is part of the AMSE/SAKI course, conducted by the [FAU](https://fau.eu/) [Chair for Open-Source Software](https://oss.cs.fau.de/) during the summer semester of 2023._
 
 <h1 align="center">
   <img alt="Logo" src="media/logo_light.png" width="256" height="256">
@@ -20,14 +20,36 @@ The project is implemented in Python and primarily uses [pandas](https://pandas.
 The analysis is based on data from the [Open Data Server](https://opendata.dwd.de/) of the [German Meteorological Service](https://www.dwd.de/EN/Home/home_node.html) and a [kaggle](https://www.kaggle.com/) dataset of [Daily Song Rankings](https://www.kaggle.com/datasets/pepepython/spotify-huge-database-daily-charts-over-3-years) scraped from [Spotify](https://developer.spotify.com/documentation/web-api/) as well as additional data points taken directly from Spotify.  
 
 ## Set up
-1. install [python 3.11](https://www.python.org/downloads/release/python-3110/) and the packages detailed in `requirements.txt`.
-2. clone this repository.
-3. create an account with kaggle and [set up your API Token](https://www.kaggle.com/docs/api).
-4. create an account with spotify and [set up your API Token](https://developer.spotify.com/documentation/web-api#getting-started) and place it in `data/spotify_credentials.txt`.
-5. run `pull-data-py` from the `data` directory.
-6. execute the `report_source.ipynb` notebook.
-7. enjoy!
-___
+1. Install [python 3.11](https://www.python.org/downloads/release/python-3110/) and [pip](https://pypi.org/project/pip/).
+2. Clone this repository.
+```bash
+git clone https://github.com/quicktus/2023-amse.git
+```
+3. Go to the project directory.
+```bash
+cd 2023-amse
+```
+4. Download and install the required python packages.
+```bash
+pip install -r requirements.txt
+```
+5. Create an account with [kaggle](https://www.kaggle.com/account/login?phase=startRegisterTab) and [set up your API Token](https://www.kaggle.com/docs/api).
+6. Create an account with [spotify](https://www.spotify.com/signup) and [set up your API Token](https://developer.spotify.com/documentation/web-api#getting-started).
+7. Edit `data/spotify_credentials.txt` to insert your spotify API Token, e.g.
+```bash
+nano data/spotify_credentials.txt
+```
+8. Go to the `data` directory.
+```bash
+cd data
+```
+8. Run `pull-data-py`.
+ ```bash
+ python pull-data-py 
+ ```
+10. Run, explore and modify the `report_source.ipynb` notebook in the IDE of your choice. I recommend [VS Code](https://code.visualstudio.com/). Note: you might have to install an extension for Jupyter notebooks first. 
+11. Enjoy!
 
-**:warning:** _This project does not aim to establish a causal relationship between weather conditions and music preferences and should not be construed as such._
+## Disclaimer
 
+> **:warning:** _This project does not aim to establish a causal relationship between weather conditions and music preferences and should not be construed as such._
