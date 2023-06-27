@@ -1,4 +1,4 @@
-> **:information_source:** _This repository is a student project focused on data engineering and data science using open data. It is part of the AMSE/SAKI course, conducted by the [FAU](https://fau.eu/) [Chair for Open-Source Software](https://oss.cs.fau.de/) during the summer semester of 2023._
+> **:information_source:** _This repository is a student project focused on data engineering and data science using open data. It is part of the [AMSE](https://oss.cs.fau.de/teaching/specific/amse/)/[SAKI](https://oss.cs.fau.de/teaching/specific/saki/) course, conducted by the [FAU](https://fau.eu/) [Chair for Open-Source Software](https://oss.cs.fau.de/) during the summer semester of 2023._
 
 <h1 align="center">
   <img alt="Logo" src="media/logo_light.png" width="256" height="256">
