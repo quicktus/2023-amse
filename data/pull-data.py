@@ -11,6 +11,27 @@
 #   - Temperature    https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/subdaily/air_temperature/
 #   - Wind           https://opendata.dwd.de/climate_environment/CDC/observations_germany/climate/subdaily/wind/
 
+#  Overview:
+#  ┌──────────────────────────────────────────────────────────────────────────────────────────────┐
+#  │    ┌─────────────────────────┐      ┌────────────────────────┐   ┌─────────────────────────┐ │
+#  │    │ source: opendata.dwd.de │      │ source: kaggle.com/api │   │ source: api.spotify.com │ │
+#  │    └─────────┬─┬─┬─┬─────────┘      └────────────┬───────────┘   └─────────▲─┬─────────────┘ │
+#  │              │ │ │ │                             │                         │ │               │
+#  │              │ │ │ │                             │                         │ │               │
+#  │ ┌────────────▼─▼─▼─▼────────────┐   ┌────────────▼────────────┐            │ │               │
+#  │ │ filter: timeframe=(2017-2020) │   │ filter: country=Germany │            │ │               │
+#  │ └────────────┬─┬─┬─┬────────────┘   └────────────┬───┬────────┘            │ │               │
+#  │              │ │ │ │                             │   │                     │ │               │
+#  │              │ │ │ └─────────────────────────┐   │   └────list(track_id)───┘ │               │
+#  │              │ │ └─────────────────────────┐ │   │                           │               │
+#  │              │ └─────────────────────────┐ │ │   │   ┌───────────────────────┘               │
+#  │              └─────────────────────────┐ │ │ │   │   │                                       │
+#  │                                        │ │ │ │   │   │                                       │
+#  │                                      ┌─▼─▼─▼─▼───▼───▼─┐                                     │
+#  │                                      │sink: data.sqlite│                                     │
+#  │                                      └─────────────────┘                                     │
+#  └──────────────────────────────────────────────────────────────────────────────────────────────┘
+
 # NOTE: If you suspect any issues with the local data, you can try running this script with the "--clean" flag. This will
 #       clean it by deleting and re-downloading all data files and re-building the SQLite db.
 
