@@ -61,7 +61,7 @@
 ]
 
 #slide(title: "RFR usage Example")[
-  #image("../media/recommendation_2023-06-26.png")
+  #image("../media/recommendation_2023-07-02.png")
 ]
 
 #slide(title: "Q&A")[
