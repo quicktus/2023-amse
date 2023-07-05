@@ -1,0 +1,110 @@
+// source: https://mobilithek.info/offers/526718847762190336
+
+pipeline BatteryTemperature {
+
+    HttpDataExtractor
+        -> ZipArchiveInterpreter
+        -> CSVFilePicker
+        -> TxtFileInterpreter
+        -> CSVDataInterpreter
+        -> RenameTemperatureColumn
+        -> RenameBatteryTempColumn
+        -> TemperatureDataInterpreter
+        -> CelsiusToFahrenheitTransformer
+        -> BatteryTempCelsiusToFahrenheitTransformer
+        -> SQLiteDataLoader;
+
+
+    block HttpDataExtractor oftype HttpExtractor {
+        url: "https://www.mowesta.com/data/measure/mowesta-dataset-20221107.zip";
+    }
+
+    block ZipArchiveInterpreter oftype ArchiveInterpreter {
+        archiveType: "zip";
+    }
+
+    block CSVFilePicker oftype FilePicker {
+        path: "/data.csv";
+    }
+
+    block TxtFileInterpreter oftype TextFileInterpreter { }
+
+    block CSVDataInterpreter oftype CSVInterpreter {
+        delimiter: ";";
+    }
+
+    block RenameTemperatureColumn oftype CellWriter {
+        at: cell E1;
+        write: ["Temperatur"];
+    }
+
+    block RenameBatteryTempColumn oftype CellWriter {
+        at: cell J1;
+        write: ["Batterietemperatur"];
+    }
+
+    block TemperatureDataInterpreter oftype TableInterpreter {
+        header: true;
+        columns: [
+            "Geraet"             oftype IdInteger,     // A sequential id number that identifies routes of the same device.
+            "Hersteller"         oftype text,          // The name of the device manufacturer.
+            "Model"              oftype text,          // The name of the device model as specified by the manufacturer.
+            "Monat"              oftype MonthInteger,  // The month of measurement (1=January, 12=December).
+            "Temperatur"         oftype decimal,       // The measured air temperature (in a height of 2 meters) of the nearest synoptic station of the German Weather Service (DWD).
+            "Batterietemperatur" oftype decimal,       // The measured battery temperature of the device.
+            "Geraet aktiv"       oftype DeBoolString,  // A string value conatining booleans in German (Ja/Nein) that indicates whether the device was in an active state during the measurement (indicates user activity).
+        ];
+    }
+
+    block CelsiusToFahrenheitTransformer oftype TableTransformer {
+        inputColumn: "Temperatur";
+        outputColumn: "Temperatur";
+        use: CelsiusToFarenheit;
+    }
+
+    block BatteryTempCelsiusToFahrenheitTransformer oftype TableTransformer {
+        inputColumn: "Batterietemperatur";
+        outputColumn: "Batterietemperatur";
+        use: CelsiusToFarenheit;
+    }
+
+    block SQLiteDataLoader oftype SQLiteLoader {
+        table: "temperatures";
+        file: "./temperatures.sqlite";  // should be fine since the dotslash bug only affects FilePicker
+    }
+}
+
+valuetype IdInteger oftype integer {
+    constraints: [ GreaterThanZero ];
+}
+
+constraint GreaterThanZero oftype RangeConstraint {
+    lowerBound: 0;
+    lowerBoundInclusive: false;
+}
+
+valuetype MonthInteger oftype integer {
+    constraints: [ InMonthRange ];
+}
+
+constraint InMonthRange oftype RangeConstraint {
+    lowerBound: 1;
+    lowerBoundInclusive: true;
+    upperBound: 12;
+    upperBoundInclusive: true;
+}
+
+valuetype DeBoolString oftype text {
+    constraints: [ IsDeBooleanValueString ];
+}
+
+constraint IsDeBooleanValueString oftype AllowlistConstraint {
+    allowlist: ["Ja", "Nein"];
+}
+
+transform CelsiusToFarenheit {
+    from tempCelsius oftype decimal;
+    to tempFarenheit oftype decimal;
+
+    tempFarenheit: (tempCelsius * 9/5) + 32;
+}
