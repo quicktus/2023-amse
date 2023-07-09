@@ -33,7 +33,7 @@ def main():
     # Write the data into the SQLite database and assign fitting types using pandas
     engine = sa.create_engine("sqlite:///airports.sqlite")
     df.to_sql("airports", engine, if_exists="replace", index=False, dtype={
-        "column_1"  : sa.types.INTEGER,      # Unique OpenFlights identifier for this airport.
+        "column_1"  : sa.types.INTEGER,  # Unique OpenFlights identifier for this airport.
         "column_2"  : sa.types.TEXT,     # Name of airport. May or may not contain the City name.
         "column_3"  : sa.types.TEXT,     # Main city served by airport. May be spelled differently from Name.
         "column_4"  : sa.types.TEXT,     # Country or territory where airport is located. See Countries to cross-reference to ISO 3166-1 codes.
