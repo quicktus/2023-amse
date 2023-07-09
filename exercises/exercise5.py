@@ -39,7 +39,7 @@ def main():
     df = df[(df["stop_lat"] >= -90) & (df["stop_lat"] <= 90)]
     df = df[(df["stop_lon"] >= -90) & (df["stop_lon"] <= 90)]
 
-    #  assign fitting SQLite types
+    # assign fitting SQLite types
     dtypes = {"stop_id": sa.types.BIGINT,
               "stop_name": sa.types.TEXT,
               "stop_lat": sa.types.FLOAT,
