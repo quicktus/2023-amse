@@ -2,6 +2,7 @@
 import os
 import pandas as pd
 import sqlalchemy as sa
+import time
 import urllib.request
 import zipfile
 
@@ -9,17 +10,30 @@ import zipfile
 # https://mobilithek.info/offers/110000000002933000
 
 SOURCE_URI: str = "https://gtfs.rhoenenergie-bus.de/GTFS.zip"
+ZIP_FILE_NAME: str = "GTFS.zip"
 
 
 def main():
     # download the ZIP file from SOURCE_URI
-    urllib.request.urlretrieve(SOURCE_URI, "GTFS.zip")
+    for attempts in range(10):
+        try:
+            urllib.request.urlretrieve(SOURCE_URI, ZIP_FILE_NAME)
+        except:
+            time.sleep(0.25 * attempts)  # backoff icreasingly
+            continue
+        else:
+            break
+
+    assert os.path.isfile(ZIP_FILE_NAME), f"{ZIP_FILE_NAME} not found - download failed"
+
     df: pd.DataFrame = None
 
     # pick out stops.txt from the ZIP file
-    with zipfile.ZipFile("GTFS.zip", "r") as zip_ref:
+    with zipfile.ZipFile(ZIP_FILE_NAME, "r") as zip_ref:
         with zip_ref.open(name="stops.txt", mode="r") as tmpfile:
             df = pd.read_csv(tmpfile)
+
+    assert df is not None, f"stops.txt not found in {ZIP_FILE_NAME}"
 
     # Only keep the columns stop_id, stop_name, stop_lat, stop_lon, zone_id
     df = df[["stop_id", "stop_name", "stop_lat", "stop_lon", "zone_id"]]
@@ -51,7 +65,7 @@ def main():
     df.to_sql("stops", engine, if_exists="replace", index=False, dtype=dtypes)
 
     # delete the ZIP file
-    os.remove("GTFS.zip")
+    os.remove(ZIP_FILE_NAME)
 
 
 if __name__ == "__main__":
